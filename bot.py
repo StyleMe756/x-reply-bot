@@ -13,6 +13,7 @@ STATE_DIR.mkdir(exist_ok=True)
 SINCE_PATH = STATE_DIR / "since_id.txt"
 UID_PATH = STATE_DIR / "user_id.txt"
 
+# OAuth 1.0a user context
 client = tweepy.Client(
     consumer_key=API_KEY,
     consumer_secret=API_SECRET,
@@ -33,8 +34,8 @@ def get_my_user_id():
     uid = _read(UID_PATH)
     if uid:
         return uid
-    u = client.get_user(username=BOT_USERNAME)
-    uid = u.data.id
+    user = client.get_user(username=BOT_USERNAME)
+    uid = user.data.id
     _write(UID_PATH, uid)
     return uid
 
@@ -42,19 +43,28 @@ def main():
     my_id = get_my_user_id()
     since_id = _read(SINCE_PATH)
 
-    params = dict(max_results=100, tweet_fields=["author_id","created_at"])
+    params = dict(max_results=100, tweet_fields=["author_id", "created_at"])
     if since_id:
         params["since_id"] = since_id
 
     resp = client.get_users_mentions(my_id, **params)
     tweets = list(resp.data or [])
-    tweets.sort(key=lambda t: int(t.id))  # oldest → newest
+    tweets.sort(key=lambda t: int(t.id))  # oldest -> newest
 
     last_seen = since_id
     for t in tweets:
         if t.author_id == my_id:
             last_seen = t.id
             continue
+
+        # *** THIS is the critical line that was getting cut off before ***
         client.create_tweet(text="hi", in_reply_to_tweet_id=t.id)
-    last_seen = t.id
-    time.sleep(1.2)  # gentle to limits
+
+        last_seen = t.id
+        time.sleep(1.2)
+
+    if last_seen and last_seen != since_id:
+        _write(SINCE_PATH, last_seen)
+
+if __name__ == "__main__":
+    main()
