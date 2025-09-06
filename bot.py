@@ -41,22 +41,21 @@ def main():
     my_id = get_my_user_id()
     print("Authenticated as user id:", my_id)
 
-    since_id = _read(SINCE_PATH)
+   import random
 
-    params = {
-        "max_results": 100,
-        "tweet_fields": ["author_id", "created_at"],
-    }
-    if since_id:
-        params["since_id"] = since_id
+# Post a simple tweet each time the workflow runs
+LINES = ["hi", "hello 👋", "sup", "yo", "hey there"]
+try:
+    msg = random.choice(LINES)
+    client.create_tweet(text=msg)
+    print("Posted a scheduled tweet:", msg)
+except Exception as e:
+    print("ERROR posting tweet:", repr(e))
+    raise
 
-    try:
-        resp = client.get_users_mentions(my_id, **params)
-    except Exception as e:
-        print("ERROR calling get_users_mentions:", repr(e))
-        raise
+# Exit early since free tier cannot read mentions
+return
 
-    tweets = list(resp.data or [])
     tweets.sort(key=lambda t: int(t.id))  # oldest -> newest
 
     last_seen = since_id
