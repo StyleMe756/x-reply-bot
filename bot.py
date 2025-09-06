@@ -25,9 +25,10 @@ client = tweepy.Client(
 
 def _read(p: pathlib.Path):
     try:
-        return p.read_text().strip()
-    except FileNotFoundError:
-        return None
+        resp = client.get_users_mentions(my_id, **params)
+    except Exception as e:
+        print("ERROR calling get_users_mentions:", repr(e))
+        raise
 
 def _write(p: pathlib.Path, val: str):
     p.write_text(str(val).strip())
@@ -39,6 +40,7 @@ def get_my_user_id():
 
 def main():
     my_id = get_my_user_id()
+    print("Authenticated as user id:", my_id)
     since_id = _read(SINCE_PATH)
 
     params = {
