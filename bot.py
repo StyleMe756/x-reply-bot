@@ -33,13 +33,9 @@ def _write(p: pathlib.Path, val: str):
     p.write_text(str(val).strip())
 
 def get_my_user_id():
-    uid = _read(UID_PATH)
-    if uid:
-        return uid
-    user = client.get_user(username=BOT_USERNAME)
-    uid = user.data.id
-    _write(UID_PATH, uid)
-    return uid
+    # Use the authenticated account instead of looking up by username
+    me = client.get_me()
+    return me.data.id
 
 def main():
     my_id = get_my_user_id()
