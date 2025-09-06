@@ -52,16 +52,19 @@ def main():
     tweets.sort(key=lambda t: int(t.id))  # oldest -> newest
 
     last_seen = since_id
-    for t in tweets:
-        if t.author_id == my_id:
-            last_seen = t.id
-            continue
-
-        # *** THIS is the critical line that was getting cut off before ***
-        client.create_tweet(text="hi", in_reply_to_tweet_id=t.id)
-
+   for t in tweets:
+    if t.author_id == my_id:
         last_seen = t.id
-        time.sleep(1.2)
+        continue
+
+    # reply "hi"
+    client.create_tweet(
+        text="hi",
+        in_reply_to_tweet_id=t.id
+    )
+
+    last_seen = t.id
+    time.sleep(1.2)
 
     if last_seen and last_seen != since_id:
         _write(SINCE_PATH, last_seen)
