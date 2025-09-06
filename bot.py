@@ -1,5 +1,7 @@
 # bot.py
-import os, time, pathlib
+import os
+import time
+import pathlib
 import tweepy
 
 API_KEY = os.environ["X_API_KEY"]
@@ -43,7 +45,10 @@ def main():
     my_id = get_my_user_id()
     since_id = _read(SINCE_PATH)
 
-    params = dict(max_results=100, tweet_fields=["author_id", "created_at"])
+    params = {
+        "max_results": 100,
+        "tweet_fields": ["author_id", "created_at"]
+    }
     if since_id:
         params["since_id"] = since_id
 
@@ -52,19 +57,19 @@ def main():
     tweets.sort(key=lambda t: int(t.id))  # oldest -> newest
 
     last_seen = since_id
-   for t in tweets:
-    if t.author_id == my_id:
+    for t in tweets:
+        if t.author_id == my_id:
+            last_seen = t.id
+            continue
+
+        # reply "hi"
+        client.create_tweet(
+            text="hi",
+            in_reply_to_tweet_id=t.id
+        )
+
         last_seen = t.id
-        continue
-
-    # reply "hi"
-    client.create_tweet(
-        text="hi",
-        in_reply_to_tweet_id=t.id
-    )
-
-    last_seen = t.id
-    time.sleep(1.2)
+        time.sleep(1.2)
 
     if last_seen and last_seen != since_id:
         _write(SINCE_PATH, last_seen)
