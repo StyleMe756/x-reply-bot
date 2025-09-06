@@ -25,32 +25,37 @@ client = tweepy.Client(
 
 def _read(p: pathlib.Path):
     try:
-        resp = client.get_users_mentions(my_id, **params)
-    except Exception as e:
-        print("ERROR calling get_users_mentions:", repr(e))
-        raise
+        return p.read_text().strip()
+    except FileNotFoundError:
+        return None
 
 def _write(p: pathlib.Path, val: str):
     p.write_text(str(val).strip())
 
 def get_my_user_id():
-    # Use the authenticated account instead of looking up by username
+    # Use the authenticated account (no username lookup)
     me = client.get_me()
     return me.data.id
 
 def main():
     my_id = get_my_user_id()
     print("Authenticated as user id:", my_id)
+
     since_id = _read(SINCE_PATH)
 
     params = {
         "max_results": 100,
-        "tweet_fields": ["author_id", "created_at"]
+        "tweet_fields": ["author_id", "created_at"],
     }
     if since_id:
         params["since_id"] = since_id
 
-    resp = client.get_users_mentions(my_id, **params)
+    try:
+        resp = client.get_users_mentions(my_id, **params)
+    except Exception as e:
+        print("ERROR calling get_users_mentions:", repr(e))
+        raise
+
     tweets = list(resp.data or [])
     tweets.sort(key=lambda t: int(t.id))  # oldest -> newest
 
