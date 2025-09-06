@@ -2,18 +2,19 @@
 import os
 import time
 import pathlib
+import random
 import tweepy
 
 API_KEY = os.environ["X_API_KEY"]
 API_SECRET = os.environ["X_API_SECRET"]
 ACCESS_TOKEN = os.environ["X_ACCESS_TOKEN"]
 ACCESS_SECRET = os.environ["X_ACCESS_SECRET"]
-BOT_USERNAME = os.environ["BOT_USERNAME"]  # no @
+BOT_USERNAME = os.environ.get("BOT_USERNAME", "")  # not used in free-schedule mode
 
 STATE_DIR = pathlib.Path("state")
 STATE_DIR.mkdir(exist_ok=True)
-SINCE_PATH = STATE_DIR / "since_id.txt"
-UID_PATH = STATE_DIR / "user_id.txt"
+SINCE_PATH = STATE_DIR / "since_id.txt"  # kept for future upgrade
+UID_PATH = STATE_DIR / "user_id.txt"     # kept for future upgrade
 
 # OAuth 1.0a user context
 client = tweepy.Client(
@@ -41,40 +42,17 @@ def main():
     my_id = get_my_user_id()
     print("Authenticated as user id:", my_id)
 
-   import random
+    # --- Free-tier mode: post a simple scheduled tweet and exit ---
+    LINES = ["hi", "hello 👋", "sup", "yo", "hey there"]
+    try:
+        msg = random.choice(LINES)
+        client.create_tweet(text=msg)
+        print("Posted a scheduled tweet:", msg)
+    except Exception as e:
+        print("ERROR posting tweet:", repr(e))
+        raise
 
-# Post a simple tweet each time the workflow runs
-LINES = ["hi", "hello 👋", "sup", "yo", "hey there"]
-try:
-    msg = random.choice(LINES)
-    client.create_tweet(text=msg)
-    print("Posted a scheduled tweet:", msg)
-except Exception as e:
-    print("ERROR posting tweet:", repr(e))
-    raise
-
-# Exit early since free tier cannot read mentions
-return
-
-    tweets.sort(key=lambda t: int(t.id))  # oldest -> newest
-
-    last_seen = since_id
-    for t in tweets:
-        if t.author_id == my_id:
-            last_seen = t.id
-            continue
-
-        # reply "hi"
-        client.create_tweet(
-            text="hi",
-            in_reply_to_tweet_id=t.id
-        )
-
-        last_seen = t.id
-        time.sleep(1.2)
-
-    if last_seen and last_seen != since_id:
-        _write(SINCE_PATH, last_seen)
+    return  # end early (mentions reading is blocked on free tier)
 
 if __name__ == "__main__":
     main()
