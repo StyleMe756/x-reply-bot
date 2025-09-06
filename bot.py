@@ -55,4 +55,6 @@ def main():
         if t.author_id == my_id:
             last_seen = t.id
             continue
-        client.create_tweet(text="hi", in_reply_to_tw
+        client.create_tweet(text="hi", in_reply_to_tweet_id=t.id)
+    last_seen = t.id
+    time.sleep(1.2)  # gentle to limits
